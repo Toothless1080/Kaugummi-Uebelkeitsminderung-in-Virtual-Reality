@@ -1,0 +1,19 @@
+Ziel -> Mittelwert : Ohne-Kaugummi < Mit-Kaugummi
+
+------------------
+Proband 7 -> Chris
+Proband 11 -> Sora
+------------------
+
+FB3 -> nicht ausschlaggebend (Gleicher Median)
+FB7 -> Mittelwert ohne höher  ( > 0.5) 	=> Bestätigung => Median ist der unterschied noch größer!! (5 zu 3)
+FB11 -> Mittelwert ohne höher ( > 0.5)	=> Bestätigung
+FB13 -> nicht ausschlaggebend
+FB17 -> Mittelwert mit höher ( > 0.4) => Widerlegung
+
+Soweit können wir die These weder bestätigen noch widerlergen.
+
+Also T-Tests:
+
+
+
