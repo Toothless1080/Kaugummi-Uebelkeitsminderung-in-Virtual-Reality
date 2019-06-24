@@ -1,0 +1,466 @@
+---
+title: "Empirische Forschung - VR-Experiment"
+author: "Philipp Lauer, Denis Schlusche, Marc Zintel"
+date: "Sommersemester 2019"
+output:
+  html_document:
+    highlight: pygments
+    number_sections: yes
+    theme: cosmo
+    toc: yes
+    toc_float: yes
+---
+
+```{r setup, include=TRUE, echo=TRUE, warnings=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warnings=FALSE)
+library(knitr)
+library(kableExtra)
+library(readxl)
+library(tidyverse)
+library(gridExtra)
+library(ggrepel) # Muss eventuell installiert werden
+library(RColorBrewer)
+myPalette <- brewer.pal(5, "YlGn")
+# Ausgabe von double-Werte mit  zwei Stellen hinter dem Komma
+options(digits=4)
+```
+
+Neben den üblichen Packages, insbesondere Tidyverse, laden wir
+das Package *gridExtra*. Mit Hilfe dieses Packages können wir Abbildungen in einer Matrix platzieren.
+
+# Thesen
+Die Forschungsthese lautet: 
+
+*Kaugummi-Kauen vermindert Übelkeit bei der Verwendung von VR-Anwendungen*.
+
+Statistisch formulieren wir das so: 
+
+*Die beiden Stichproben haben unterschiedliche Erwartungswerte in den Beurteilungen*. Die Mittelwerte der beiden Stichproben sind verschieden, der aus der *Ohne-Kaugummi*-Gruppe ist kleiner als der aus der *Mit-Kaugummi*-Gruppe.
+Neben den beiden Stichproben mit Fragen und Antworten auf einer Likert-Skala gibt es einen weiteren Datensatz mit Meta-Angaben zu den Probanden. Dabei ist die Nummerierung der Probanden in allen drei Dateien gleich.
+
+Die Stichprobe Mit- und Ohne-Kaugummi sind verbundene Stichproben.
+
+# Daten
+Die Daten liegen als csv-Dateien vor, in *UmfageCon.csv* und *UmfragePro.csv*. Die Dateien enthalten keine Header, und 12 bzw. 11 Zeilen.
+Die Spalten sind die Bewertungen der einzelnen Probanden für die verschiedenen Bilder.
+
+Pro Frage konnten die Probanden auf einer Skala von 0 bis 9 eine Bewertung abgeben. Die Spaltennamen der Dateien wurden an die Nummerierung der Fragen angeglichen.
+
+Die beiden letzten Spalten bei Probanden.xlsx ist die Dauer des Versuchs in Minuten,
+```{r data, echo=TRUE}
+MitKaugummi <- read_excel("data/MitKaugummi.xlsx")
+
+OhneKaugummi <- read_excel("data/OhneKaugummi.xlsx")
+
+Probanden <- read_excel("data/Probanden.xlsx")
+```
+
+Die Probanden mit ungeraden Nummern haben ohne Kaugummi begonnen, die mit gerade ids haben mit Kaugummi begonnen.
+
+Die Tabellen 1 - 3  zeigen die eingelesenen Daten.
+
+```{r kable, echo=TRUE}
+kable(MitKaugummi, align="l",
+      caption="Tabelle 1: Ergebnisse mit Kaugummi") %>%
+   kable_styling(bootstrap_options = c("striped", "condensed"), 
+                full_width = T, 
+                position = "center")
+
+kable(OhneKaugummi, align="l",
+      caption="Tabelle 2: Ergebnisse ohne Kaugummi") %>%
+      kable_styling(bootstrap_options = c("striped", "condensed"), 
+                full_width = T, 
+                position = "center")
+
+kable(Probanden, align="l",
+      caption="Tabelle 3: Metadaten in Probanden.xlsx") %>%
+      kable_styling(bootstrap_options = c("striped", "condensed"), 
+                full_width = T, 
+                position = "center")
+```
+
+# Übersicht über die Daten
+Bevor wir in die Tests gehen verschaffen wir uns einen Überblick über die Daten.
+
+Wir können für die einzelnen Fragen mit der Funktion *summary* Lage- und Streuungsparameter berechnen:
+
+```{r summaries, echo=TRUE}
+summary(MitKaugummi$FB3)
+summary(OhneKaugummi$FB3)
+summary(MitKaugummi$FB11)
+summary(OhneKaugummi$FB11)
+summary(MitKaugummi$FB13)
+summary(OhneKaugummi$FB13)
+```
+
+Was bereits bei diesen beiden willkürlich ausgewählten Fragen
+auffällt ist, dass sowohl Median als auch Mittelwert der Daten  
+nicht in jedem Fall die Forschungsthese bestätigen.
+
+Um dies weiter zu untersuchen erstellen wir paarweise Box-Plots
+für verschiedene Fragen:
+
+```{r boxplots, echo=TRUE}
+p1 <- ggplot(data = MitKaugummi) + 
+  geom_boxplot(mapping=aes(y = FB3)) +
+  scale_y_continuous(limits=c(0,9), breaks=seq(0,9)) +
+  labs(
+    title="Mit Kaugummi, Frage FB3", 
+    x="",
+    y=""
+  ) 
+p2 <- ggplot(data = OhneKaugummi) + 
+  geom_boxplot(mapping=aes(y = FB3)) +
+  scale_y_continuous(limits=c(0,9), breaks=seq(0,9)) +
+  labs(
+    title="Ohne Kaugummi, Frage FB3", 
+    x="",
+    y="" 
+  )
+p3 <- ggplot(data = MitKaugummi) + 
+  geom_boxplot(mapping=aes(y = FB11)) +
+  scale_y_continuous(limits=c(0,9), breaks=seq(0,9)) +
+  labs(
+    title="Mit Kaugummi, Frage FB11", 
+    x="",
+    y=""
+  ) 
+p4 <- ggplot(data = OhneKaugummi) + 
+  geom_boxplot(mapping=aes(y = FB11)) +
+   scale_y_continuous(limits=c(0,9), breaks=seq(0,9)) +
+  labs(
+    title="Ohne Kaugumme, Frage FB11", 
+    x="",
+    y="" 
+  )
+p5 <- ggplot(data = MitKaugummi) + 
+  geom_boxplot(mapping=aes(y = FB13)) +
+  scale_y_continuous(limits=c(0,9), breaks=seq(0,9)) +
+  labs(
+    title="Mit Kaugummi, Frage FB13", 
+    x="",
+    y=""
+  ) 
+
+p6 <- ggplot(data = OhneKaugummi) + 
+  geom_boxplot(mapping=aes(y = FB13)) +
+  scale_y_continuous(limits=c(0,9), breaks=seq(0,9)) +
+  labs(
+    title="Ohne Kaugummi, Frage FB13", 
+    x="",
+    y="" 
+  )
+
+
+grid.arrange(p1, p2, p3, p4, p5, p6, nrow=3, ncol=2)
+```
+
+Wir erstellen Balkendiagramme für zwei Fragen, um die Verteilung der Bewertungen zu visualisieren.
+
+```{r barplots, echo=TRUE}
+p1 <- ggplot(data=MitKaugummi) + 
+     geom_bar(mapping=aes(x = FB3, y = ..prop..), fill=myPalette[2]) +
+     scale_x_continuous(limits=c(0,9), breaks=seq(0,9)) +
+     scale_y_continuous(limits=c(0.0, 1.0)) +
+     labs(
+       title="Mit Kaugummi, Frage FB3", 
+       x="Bewertungen",
+       y="Relative Häufigkeiten"
+     ) 
+
+p2 <- ggplot(data=OhneKaugummi) + 
+     geom_bar(mapping=aes(x = FB3, y = ..prop..), fill=myPalette[3]) +
+     scale_x_continuous(limits=c(0,9), breaks=seq(0,9)) +
+     scale_y_continuous(limits=c(0.0, 1.0)) +
+     labs(
+       title="Ohne Kaugummi, Frage FB3", 
+       x="Bewertungen",
+       y="Relative Häufigkeiten"
+     ) 
+
+p3 <- ggplot(data=MitKaugummi) + 
+     geom_bar(mapping=aes(x = FB11, y = ..prop..), fill=myPalette[2]) +
+     scale_x_continuous(limits=c(0,9), breaks=seq(0,9)) +
+     scale_y_continuous(limits=c(0.0, 1.0)) +
+     labs(
+       title="Mit Kaugummi, Frage FB11", 
+       x="Bewertungen",
+       y="Relative Häufigkeiten"
+     ) 
+
+p4 <- ggplot(data=OhneKaugummi) + 
+     geom_bar(mapping=aes(x = FB11, y = ..prop..), fill=myPalette[3]) +
+     scale_x_continuous(limits=c(0,9), breaks=seq(0,9)) +
+     scale_y_continuous(limits=c(0.0, 1.0)) +
+     labs(
+       title="Ohne Kaugummi, Frage FB11", 
+       x="Bewertungen",
+       y="Relative Häufigkeiten"
+     ) 
+
+grid.arrange(p1, p2, p3, p4, nrow=2, ncol=2)
+```
+
+Interessant ist natürlich auch die Frage, ob die Bewertungen mit und ohne Kaugummi von den Metadaten abhängen, wie der Erfahrung der Probanden oder dem Geschlecht. Dazu erstellen wir Streuungsdiagramme.
+
+```{r echo=TRUE}
+meta <- tibble(Mit = MitKaugummi$FB11, Ohne = OhneKaugummi$FB11,
+               Erf = Probanden$Erfahren, Sex = Probanden$Geschlecht)
+
+ggplot(data=meta, aes(x=Mit, y = Ohne)) + 
+  geom_point(aes(color=Erf)) +
+  scale_x_continuous(limits = c(0.0, 9.0), breaks=seq(0,9)) +
+  scale_y_continuous(limits = c(0.0, 9.0), breaks=seq(0,9)) +
+  labs(
+       title="Streuungsdiagramm Frage FB11", 
+       x="Bewertung mit Kaugummi",
+       y="Bewertung ohne Kaugummi"
+     ) 
+
+ggplot(data=meta, aes(x=Mit, y = Ohne)) + 
+  geom_point(aes(color=Sex)) +
+  scale_x_continuous(limits = c(0.0, 9.0), breaks=seq(0,9)) +
+  scale_y_continuous(limits = c(0.0, 9.0), breaks=seq(0,9)) +
+  labs(
+       title="Streuungsdiagramm Frage FB11", 
+       x="Bewertung mit Kaugummi",
+       y="Bewertung ohne Kaugummi"
+     ) 
+```
+
+Den letzten Scatterplot könnte man vorsichtig so interpretieren,
+dass es einen Unterschied zwischen Geschlecht und Bewertung gibt.
+
+Die Forschungsthese ist, dass die Mittelwerte in der Gruppe
+Ohne Kaugummi größer sind als die bei der Gruppe mit Kaugummi. 
+Wir berechnen die Mittelwerte aller Spalten, also aller Fragen FB3 bis FB17,
+für beide Möglichkeiten. Wir können die Differenz dieser
+Werte bilden, und davon wieder den Mittelwert, also die mittlere
+Distanz der Bewertungen zwischen den Gruppen, bestimmen. Dazu verwenden wir die Funktion *sapply*, um *mean* pro Spalte anzuwenden.
+
+Dann können wir diese Werte in einem Scatter-Plot darstellen. 
+
+```{r mittelwerte}
+mit.means <- sapply(MitKaugummi[,4:18], mean)
+ohne.means <- sapply(OhneKaugummi[,4:18], mean)
+
+mean(ohne.means - mit.means)
+
+# Beide Vektoren in einen tibble aufnehmen
+# für das Streuungsdiagramm
+mw <- tibble(Frage=names(MitKaugummi[,4:18]), ohne.means, mit.means)
+mw
+
+mwPlot <- ggplot(data=mw, aes(x=ohne.means, y = mit.means)) + 
+  geom_point(color=myPalette[4]) +
+  geom_abline(slope=1.0, intercept=0.0, color="orange", width=3.0) +
+  scale_x_continuous(limits = c(0.0, 9.0), breaks=seq(0,9)) +
+  scale_y_continuous(limits = c(0.0, 9.0), breaks=seq(0,9)) +
+  labs(
+       title="Mittelwerte der Fragen FB3 bis FB17", 
+       x="Ohne Kaugummi",
+       y="Mit Kaugummi"
+     ) 
+
+mwPlot
+
+# Mit Namen
+mwPlot +
+  geom_text_repel(aes(label=Frage), size=3)
+```
+
+eine Zeile macht Probleme, da dort kein Wert steht. Ob wir diese Zeile mit *filter* löschen oder nicht muss man entscheiden.
+
+Man sieht an den Scatterplots, dass nicht alle Punkte unterhalb der
+Linie liegen, wie die These eigentlich vorhersagen würde. Das könnte aber auch an den ausgewählten Fragen liegen.
+
+# Hypothesentests
+Wir untersuchen, ob die Mittelwerte der bewertungen einer Frage
+zwischen den beiden Gruppen ungleich sind. Ist dieser Test erfolgreich können wir auch auf kleiner- bzw. Größer-Gleich testen. 
+
+Wir könnten auch alle Bewertungen in eine große Spalte kopieren und einen Test über alles machen.
+
+Exemplarisch wählen wir die Frage FB11 aus.
+Bevor wir den t-Test dafür durchführen, geben wir die beiden Mittelwerte und auch die Mediane aus:
+
+```{r means, echo=TRUE, warnings=FALSE}
+mean(MitKaugummi$FB11)
+
+mean(OhneKaugummi$FB11)
+
+median(MitKaugummi$FB11)
+
+median(OhneKaugummi$FB11)
+
+sd(MitKaugummi$FB11)
+
+sd(OhneKaugummi$FB11)
+```
+
+Bei Frage 11 scheint unsere These zu stimmen; im Median ist der Unterschied sogar noch besser zu sehen.
+
+Der t-Test testet einen Mittelwert auf einen vorgegebenen Wert, oder vergleicht zwei Stichproben darauf, ob die Mittelwerte identisch sind. Solche Tests gibt es in zwei Arten: sogenannte verbundene oder
+gepaarte Stichproben, oder unverbundene, ungepaarte Stichproben. 
+Gepaart sind Stichproben dann, wenn beide Untersuchungen mit den gleichen Probanden durchgeführt werden - wir haben also in unserem Fall einen gepaarten Test. Als Irrtumswahrscheinlichkeit verwenden wir als
+Default 5%, also haben wir ein Konfidenzniveau von 95%. 
+
+Bevor wir den Test auf unsere Daten anwenden machen wir ein Beispiel.
+Wir erzeugen je 100 normalverteilte Samples mit zwei verschiedenen Mittelwerten und verschiedenen Standardabweichungen. Dann sind wir ziemlich sicher, dass der t-Test die Nullhypothese verwirft.
+
+```{r tExample1, echo=TRUE, warnings=FALSE}
+x <- rnorm(100, mean=-0.5, sd=1)
+y <- rnorm(100, mean= 0.5, sd=1.5)
+
+result <- t.test(x,y)
+result
+```
+
+Kurz zu den Ausgaben der Funktion *t.test*. Der p-Wert
+`r result$p.value` 
+ist sehr klein, auf jeden Fall kleiner als die Irrtumswahrscheinlichkeit von 5%, also 0.05. Dass wir die Null-Hypothese verwerfen sehen wir hier auch am Wert der t-Statistik, die berechnet wird
+als `r result$statistic`. Dieser Wert liegt nicht im Intervall, das durch die kritischen Werte, die als *95 percent confidence interval* angegeben werden - auch das führt zum Verwerfen der Nullhypothese.
+
+Wir führen noch ein weiteres Beispiel ein, dieses mal mit
+gleichen Standardabweichungen, und einem veränderten Konfidenzniveau.
+Wir geben auch noch einige weitere Parameter ein. Dieses Mal
+sollte der Test angenommen werden, denn wir erzeugen ein weiteres
+Sample mit dem gleichen Mittelwert wie die Variable x.
+
+```{r tExample2, echo=TRUE, warnings=FALSE}
+z <- rnorm(100, mean=-0.5, sd=1)
+
+signif <- 0.99
+result <- t.test(x, z,
+       paired=FALSE, 
+       conf.level=signif)       
+
+result
+pv <- result$p.value
+```
+
+Der berechnete p-Wert ist `r pv`.
+Also ist der p-Wert deutlich größer als die Irrtumswahrscheinlichkeit
+von 1%. Wir verwerfen die Nullhypothese nicht, dass die beiden Mittelwerte übereinstimmen.
+
+```{r tExample3, echo=TRUE, warnings=FALSE}
+signif <- 0.95
+result <- t.test(x, z,
+       paired=FALSE, 
+       conf.level=signif) 
+
+result
+```
+
+Der berechnete p-Wert ist `r result$p.value`.
+Also ist der p-Wert deutlich größer als die Irrtumswahrscheinlichkeit
+von 5%. Wir verwerfen die Nullhypothese nicht, dass die beiden Mittelwerte übereinstimmen.
+
+Die Tests, die wir jetzt durchgeführt haben sind zweiseitige Tests - damit meint man, dass wir auf in der Nullhypothese auf Gleichheit prüfen. In den Stichproben x und y liegen aber zwei Mittelwerte vor, die einmal bei -0.5 und einmal bei 0.5 liegen - wir können darauf testen, indem wir einen einseitigen Test durchführen.
+
+```{r tExample4, echo=TRUE, warnings=FALSE}
+signif <- 0.95
+result <- t.test(x, y,
+       paired=FALSE, 
+       alternative="greater",
+       conf.level=signif) 
+
+result
+```
+
+Im Argument *alternative* geben wir das Ungleichzeichen für die Gegenhypothese an, in unserem Fall *>*. Der berechnete p-Wert
+ist durch `r result$p.value` gegeben, der größer ist als die 
+Irrtumswahrscheinlichkeit von 5%. Wir verwerfen die Nullhypothese,
+dass der Mittelwert in x kleiner oder gleich dem in y ist, nicht.
+
+
+Diesen Test wenden wir jetzt auf die Spalten in den Datensätzen
+OhneKaugummi und MitKaugummi zur Frage FB11 an. Die Nullhypothese
+ist, dass der Mittelwert ohne Kaugummi größer ist als der
+mit Kaugummi. Wir verwenden dieses mal auch *paired=TRUE*,
+denn das Experiment wurde mit einer gepaarten Stichprobe durchgeführt.
+
+```{r tKaugummi1195, echo=TRUE, warnings=FALSE}
+signif <- 0.95
+result <- t.test(OhneKaugummi$FB11, MitKaugummi$FB11,
+       paired=TRUE, 
+       alternative="less",
+       conf.level=signif) 
+result
+```
+
+Das konnten wir schon aus den Abbildungen oben schließen, für diese
+Frage verwerfen wir die Nullhypothese nicht, mit einem
+p-Wert von `r result$p.value`, der deutlich größer als die Irrtumswahrscheinlichkeit ist. 
+
+Wir verringern die Irrtumswahrscheinlichkeit auf 1%:
+
+```{r tKaugummi1199, echo=TRUE, warnings=FALSE}
+signif <- 0.99
+result <- t.test(OhneKaugummi$FB11, MitKaugummi$FB11,
+       paired=TRUE, 
+       alternative="less",
+       conf.level=signif) 
+result
+```
+
+Auch hier ist der p-Wert `r result$p.value` deutlich oberhalb der Irrtumswahrscheinlichkeit
+
+Wir hatten FB11 ausgewählt, denn im Scatterplot mit den verschiedenen
+Mittelwerten lag dieser Punkt deutlich sichtbar im korrekten Bereich.
+Jetzt betrachten wir analog zu FB11 die Frage FB13 - diese ist
+ziemlich nah an der Linie im scatterplot.
+
+
+```{r tKaugummi1395, echo=TRUE, warnings=FALSE}
+signif <- 0.95
+result <- t.test(OhneKaugummi$FB13, MitKaugummi$FB13,
+       paired=TRUE, 
+       alternative="less",
+       conf.level=signif) 
+result
+```
+
+Der p-Wert `r result$p.value` führt nicht zur Ablehnung
+der Nullhypothese.
+
+# Daten im long-Format
+Statt jede Frage einzeln zu betrachten könnten wir die Antworten
+pro Frage in eine einzelne Spalte aufnehmen - tidyverse nennt solche
+Datensätze long-Format. Dazu gibt es die Funktion *gather*, mit
+der wir dies erzielen können:
+
+
+```{r gather, echo=TRUE}
+mit.lf <- MitKaugummi %>%
+  gather(key=Frage, value=Bewertung, FB3:FB17) %>%
+  select(Proband, Frage, Bewertung) %>%
+  mutate(
+   NumBewertung = as.numeric(Bewertung) 
+  )
+
+mit.lf
+
+ohne.lf <- OhneKaugummi %>%
+  gather(key=Frage, value=Bewertung, FB3:FB17) %>%
+  select(Proband, Frage, Bewertung) %>%
+  mutate(
+   NumBewertung = as.numeric(Bewertung) 
+  )
+
+ohne.lf
+```
+
+Jetzt können wir die Spalten mit der Bezeichnung *Bewertung*
+verwenden, um einen t-Test über alle Fragen durchzuführen.
+
+```{r tGathered, echo=TRUE, warnings=FALSE}
+signif <- 0.95
+result <- t.test(ohne.lf$NumBewertung, mit.lf$NumBewertung,
+       paired=TRUE, 
+       alternative="less",
+       conf.level=signif) 
+result
+```
+
+Auch hier der p-Wert `r result$p.value`wieder deutlich oberhalb der Irrtumswahrscheinlichkeit von `r 1.0-signif`. Wir verwerfen die
+Nullhypothese nicht!
